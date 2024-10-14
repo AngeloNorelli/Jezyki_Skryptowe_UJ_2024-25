@@ -24,18 +24,18 @@ fi
 # Sprawdzenie, czy peirwsza liczba jest mniejsza od drugiej
 if ((start > end)); then
     # echo "Pierwsza wartość musi być mniejsza od drugiej."
-    exit 0
+    exit 1
 fi
 
 # Obliczanie szerokości komórki na podstawie N
-# max_value=$((end * end))
-# base_width=${#max_value}
-# if ((base_width + 1 < 4)); then
-#     cell_width=4
-# else
-#     cell_width=$((base_width + 1))
-# fi
-cell_width=4
+max_value=$((end * end))
+base_width=${#max_value}
+if ((base_width + 1 < 4)); then
+    cell_width=4
+else
+    cell_width=$((base_width + 1))
+fi
+# cell_width=4
 
 # Wypisanie pierwszego wierszu
 printf "%${cell_width}s" " "        # Pusta komórka
