@@ -1,64 +1,74 @@
 #!/bin/bash
 
-# Initialize variables to track options
-input_file=""
+# Inicjalizacja zmiennych
 output_file=""
-options=""
+input_file=""
+declare -A options
+noFilename=0
 
-# Function to display the list of options
+# Funkcja wypisujaca opcje
 print_options() {
-    echo "$options" | sort
+    for opt in $(echo "${!options[@]}" | tr ' ' '\n' | sort); do
+        if [[ $opt == "i" ]]; then
+            echo "-i present and set to \"${options[$opt]}\""
+        elif [[ $opt == "o" ]]; then
+            echo "-o present and set to \"${options[$opt]}\""
+        else
+            echo "-$opt present"
+        fi
+    done
 }
 
-# Process options using getopts
-while getopts ":abcri:o:q" opt; do
+# Parsowanie przez opcje
+while getopts ":qabcdefghjklmnprstuvyxwz:i:o:" opt; do
     case $opt in
-        a|b|c|r)
-            options+="-${opt} present"
-            ;;
-        i)
-            if [ -z "$OPTARG" ]; then
-                echo "-i -o options require a filename"
-                exit 1
-            fi
-            input_file=$OPTARG
-            options+="-i present and set to \"$OPTARG\""
-            ;;
-        o)
-            if [ -z "$OPTARG" ]; then
-                echo "-i -o options require a filename"
-                exit 1
-            fi
-            output_file=$OPTARG
-            options+="-o present and set to \"$OPTARG\""
+        [a-hj-npr-z])
+            options[$opt]="present"
             ;;
         q)
             echo "Unsupported option: -q"
             exit 1
             ;;
+        i|o)
+            if [[ -n ${OPTARG} && ${OPTARG:0:1} != "-" ]]; then
+                options[$opt]=$OPTARG
+                echo $OPTARG
+            elif [[ ${OPTARG} == "-q" ]]; then
+                echo "Unsupported option: -q"
+                exit 1
+            else
+                noFilename=1
+            fi
+            ;;
         \?)
-            echo "Invalid option: -$OPTARG" >&2
+            echo "Invalid option: -$OPTARG"
             exit 1
             ;;
         :)
-            echo "Option -$OPTARG requires an argument." >&2
+            echo "-i -o options require a filename"
             exit 1
             ;;
     esac
 done
 
-# Remove processed options from arguments
+# Przesuniecie indeksu przez sprawdzone opcje i ich argumenty
 shift $((OPTIND - 1))
 
-# Print sorted options
+# Sprawdzenie, czy opcja -i lub -o ma blad
+if [ $noFilename == 1 ]; then
+    echo "-i -o options require a filename"
+    exit 1 
+fi
+
+# Wypisanie opcji w kolejnosci alfabetycznej
 print_options
 
-# Print arguments, if any
-if [ "$#" -gt 0 ]; then
+# Wypisanie argumentow, jesli takowe istnieja
+if [ $# -gt 0 ]; then
     echo "Arguments are:"
-    i=1
+    count=1
     for arg in "$@"; do
-        echo "\$$i=$arg"
-        i=$((i+1))
+        echo "\$$count=$arg"
+        count=$((count + 1))
     done
 fi
