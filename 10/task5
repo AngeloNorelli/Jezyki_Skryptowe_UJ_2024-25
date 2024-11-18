@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Sprawdzenie, czy podano odpowiednią liczbę argumentów
+if [ $# -ne 2 ]; then
+    echo "Użycie: $0 <plik> <N>" >&2
+    exit 1
+fi
+
+logfile=$1
+threshold=$2
+
+# Sprawdzenie, czy plik istnieje
+if [ ! -f "$logfile" ]; then
+    echo "Plik $logfile nie istnieje" >&2
+    exit 1
+fi
+
+# Sprawdzenie, czy N jest liczbą
+if ! [[ "$threshold" =~ ^[0-9]+$ ]]; then
+    echo "N musi być liczbą całkowitą" >&2
+    exit 1
+fi
+
+awk -F'[ \\[/:]+' -v N="$threshold" '
+{
+    # IP, godzinę, dzień, miesiąc, rok
+    ip = $1
+    hour = $7
+    day = $4
+    month = $5
+    year = $6
+
+    # Tworzenie kluczu grupującego
+    key = ip " " hour ":00:00-" (hour+1) ":00:00 " day "/" month "/" year
+
+    # Zliczamy wystąpienia
+    count[key]++
+}
+END {
+    # Wypisanie wyniku
+    for (key in count) {
+        if (count[key] > N) {
+            print key, count[key]
+        }
+    }
+}
+' "$logfile" | sort -k4,4nr -k1,1 | head -n 10
