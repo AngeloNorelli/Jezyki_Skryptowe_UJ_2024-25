@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# Sprawdzenie, czy podano odpowiednią liczbę argumentów
+if [ $# -ne 2 ]; then
+    echo "Użycie: $0 <plik> <N>" >&2
+    exit 1
+fi
+
+logfile=$1
+threshold=$2
+
+# Sprawdzenie, czy plik istnieje
+if [ ! -f "$logfile" ]; then
+    echo "Plik $logfile nie istnieje" >&2
+    exit 1
+fi
+
+# Sprawdzenie, czy N jest liczbą
+if ! [[ "$threshold" =~ ^[0-9]+$ ]]; then
+    echo "N musi być liczbą całkowitą" >&2
+    exit 1
+fi
+
+# Przetwarzanie logu przy użyciu awk
+awk -v N="$threshold" '
+BEGIN {
+    FS=" "  # Ustawienie separatora na spację
+}
+{
+    # Z parsowania logu wyciągamy IP, datę i godzinę
+    ip = $1
+    date_str = $2
+    date_str = substr(date_str, 2, length(date_str)-2)  # Usuwamy nawiasy []
+    date = substr(date_str, 1, 11)  # Data (dzień)
+    hour = substr(date_str, 13, 2)  # Godzina (godzina zapytania)
+    
+    # Liczymy zapytania dla każdego IP w godzinie
+    key = ip " " hour " " date
+    counts[key]++
+}
+END {
+    # Sortowanie wyników po liczbie zapytań (malejąco), a potem po IP (rosnąco)
+    for (key in counts) {
+        if (counts[key] > N) {
+            split(key, parts, " ")
+            ip = parts[1]
+            hour = parts[2]
+            date = parts[3]
+            
+            # Tworzymy odpowiedni format godzinowy
+            start_hour = sprintf("%02d:00:00", hour)
+            end_hour = sprintf("%02d:00:00", (hour + 1) % 24)
+            
+            # Zapisujemy wynik
+            result[date " " start_hour "-" end_hour " " ip] = counts[key]
+        }
+    }
+
+    # Sortowanie po liczbie zapytań malejąco, po IP rosnąco
+    n = 0
+    for (entry in result) {
+        n++
+        if (n > 10) break
+        print entry, result[entry]
+    }
+}
+' "$file_name"
