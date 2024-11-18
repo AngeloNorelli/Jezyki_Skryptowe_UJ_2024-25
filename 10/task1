@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Sprawdzenie, czy podano nazwe pliku.
+if [ $# -ne 1 ]; then
+    echo "Nie podano pliku z logami" >&2
+    exit 1
+fi
+
+logfile=$1
+
+# Sprawdzenie, czy taki plik istnieje
+if [ ! -f "$logfile" ]; then
+    echo "Plik $logfile nie istnieje" >&2
+    exit 1
+fi
+
+(wc -l < "$logfile")
+
+# Zliczenie liczby wierszy w pliku
+total_requests=$(wc -l < "$logfile")
+
+# Wyswietlenie wyniku
+echo "$total_requests"
