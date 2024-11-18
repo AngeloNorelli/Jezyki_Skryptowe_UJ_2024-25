@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # Domyślne wartości
-max_depth=""
+max_depth=32
 hash_algo="md5sum"
 replace_with_hardlinks=false
 unsupported_algo=false
+interactive=false
 
 # Zmienne statystyczne
 processed_files=0
@@ -19,6 +20,7 @@ show_help() {
     echo "  --replace-with-hardlinks    Replace duplicate files with hardlinks"
     echo "  --max-depth=N               Set the maximum depth for directory traversal"
     echo "  --hash-algo=ALGO            Set hashing algorithm (default: md5sum)"
+    echo "  --interactive               Asks you for replacing the file"
     echo "  --help                      Show this help message"
     exit 0
 }
@@ -44,8 +46,11 @@ while [[ $# -gt 0 ]]; do
         --help)
             show_help
             ;;
+        --interactive)
+            interactive=true
+            ;;
         *)
-            dirname="$1"
+            dirname="${1}"
             shift
             ;;
     esac
@@ -64,62 +69,96 @@ if [[ -z "$dirname" ]]; then
 fi
 
 # Zbieranie plików wg wielkości i hasha
-declare -A files_by_size
-declare -A files_by_hash
+declare -A files_dict
 
-find_args=("$dirname")
+# Użycie pliku tymczasowego zamiast substytucji procesów
+tmpfile=$(mktemp "$file.XXXXXXXXXX" )
 
-# Dodawanie opcji do find w odpowiedniej kolejności
-if [[ -n "$max_depth" ]]; then
-    find_args+=(-maxdepth "$max_depth")
+# Sprawdzenie, czy udało się utworzyć plik tymczasowy
+if [[ ! -f "$tmpfile" ]]; then
+    echo "Błąd: Nie udało się utworzyć pliku tymczasowego. System plików może być tylko do odczytu." >&2
+    exit 1
 fi
 
-find_args+=(-type f)
+find "$dirname" -maxdepth "$max_depth" -type f -not -name "$(basename "$tmpfile")" -print0 |\
+xargs -0 stat --format='%s %n' |\
+awk -F='' '{ depth=gsub("/", "/"); print depth, $1, $2 }' |\
+sort -k1,1n -k2 |\
+cut -d' ' -f2- > "$tmpfile"
 
-# Gromadzenie plików wg rozmiaru
-while IFS= read -r file; do
+# Gromadzenie plików
+while read -r file_size file_path; do
     ((processed_files++))
-    size=$(stat -c%s "$file")
-    files_by_size["$size"]+="$file"$'\n'
-done < <(find "${find_args[@]}")
-
-# Znajdowanie duplikatów na podstawie haszy
-for size in "${!files_by_size[@]}"; do
-    files=($(echo "${files_by_size[$size]}" | tr '\n' ' '))
-    if (( ${#files[@]} > 1 )); then
-        for file in "${files[@]}"; do
-            hash=$("$hash_algo" "$file" | awk '{print $1}')
-            files_by_hash["$size:$hash"]+="$file"$'\n'
-        done
+    
+    if [[ -n "${files_dict[$file_size]}" ]]; then
+        files_dict[$file_size]="${files_dict[$file_size]}|$file_path"
+    else
+        files_dict[$file_size]="$file_path"
     fi
-done
+done < "$tmpfile"
+rm "$tmpfile"
 
-# Zastępowanie duplikatów hardlinkami, jeśli opcja została włączona
-for key in "${!files_by_hash[@]}"; do
-    files=($(echo "${files_by_hash[$key]}" | tr '\n' ' '))
-    if (( ${#files[@]} > 1 )); then
-        reference_file="${files[0]}"
-        duplicates_count=$(( ${#files[@]} - 1 ))
-        ((duplicate_files+=duplicates_count))
-        
-        if $replace_with_hardlinks; then
-            for ((i = 1; i < ${#files[@]}; i++)); do
-                file="${files[$i]}"
-                cmp -s "$reference_file" "$file"
-                if [[ $? -eq 0 ]]; then
-                    # Zapytanie o potwierdzenie, jeśli włączona opcja interactive
-                    if $interactive; then
-                        read -p "Replace '$file' with hardlink to '$reference_file'? (y/n) " answer
-                        if [[ $answer != "y" ]]; then
-                            continue
-                        fi
+# Znajdowanie duplikatów na podstawie haszy oraz nazw
+for files in "${files_dict[@]}"; do
+    IFS='|' read -r -a possible_duplicates <<< "$files"
+
+    if [[ ${#possible_duplicates[@]} -lt 2 ]]; then
+        continue
+    fi
+
+    least_deep_file="${possible_duplicates[0]}"
+    least_deep_dir=$(dirname "$least_deep_file")
+    
+    for duplicate in "${possible_duplicates[@]}"; do
+        if [[ "$duplicate" != "$least_deep_file" ]]; then
+            hash_least_deep_file=$("$hash_algo" "$least_deep_file" | awk '{print $1}')
+            hash_duplicate=$("$hash_algo" "$duplicate" | awk '{print $1}')
+
+            # Sprawdzenie plikow pod wzgledem hashy
+            if [[ "$hash_least_deep_file" != "$hash_duplicate" ]]; then
+                echo "File '$duplicate' has different hash then '$least_deep_file'." >&2
+                continue
+            fi
+
+            # Sprawdzenie plikow przy uzyciu cmp
+            if ! cmp -s "$least_deep_file" "$duplicate"; then
+                echo "File '$duplicate' has different content then '$least_deep_file'." >&2
+                continue
+            fi
+
+            # Po sprawdzeniach na pewno mamy doczynienia z duplikatem
+            ((duplicate_files++))
+
+            fs_least_deep_file=$(df -P "$least_deep_file" 2>/dev/null | awk 'NR==2 {print $1}')
+            fs_duplicate=$(df -P "$duplicate" 2>/dev/null | awk 'NR==2 {print $1}')
+
+            # Sprawdzenie, czy oba pliki sa w tym samym systemie plikowym
+            if [[ "$fs_least_deep_file" != "$fs_duplicate" ]]; then
+                echo "Can't create a hard link from '$fs_duplicate' to '$fs_least_deep_file': different filesystems." >&2
+                continue
+            fi
+
+            # Sprawdzenie, czy mozna wpisywac do folderu
+            if [ ! -w "$least_deep_dir" ]; then
+                echo "No write access to the directory '$least_deep_dir'. Can't create a hard link for '$duplicate'." >&2
+                continue
+            fi
+
+            if $replace_with_hardlinks; then
+                if $interactive; then
+                    read -p "Do you wonna remove '$duplicate' and make a hard link to '$least_deep_file'? (y/n)" response
+
+                    if [[ ! "$response" =~ ^[Nn]$ ]]; then
+                        continue
                     fi
-                    ln -f "$reference_file" "$file" 2>/dev/null || echo "Cannot create hardlink for file $file" >&2
-                    ((replaced_duplicates++))
                 fi
-            done
+                
+                rm "$duplicate"
+                ln "$least_deep_file" "$duplicate"
+                ((replaced_duplicates++))
+            fi
         fi
-    fi
+    done
 done
 
 # Generowanie raportu
