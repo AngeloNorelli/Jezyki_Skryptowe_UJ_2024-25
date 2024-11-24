@@ -24,7 +24,7 @@ Drugi program powinien liczyć unikalne adresy IP, które wysłały żądania. M
 1.2.3.9 6
 ```
 ## Zadanie 3
-Trzeci program powinien wyświetlać najbardziej żądane strony ("strona" to ciąg znaków występujący zaraz po GET lub POST, może być obrazkiem może być nawet "/"). Można go wywołać tak: ./task3 logfile.log. Format żądanie, spacja, liczba żądań. Sortujemy malejąco po drugiej kolumnie, w przypadku remisu porównujemy pierwszą kolumnę.
+Trzeci program powinien wyświetlać najbardziej żądane strony ("strona" to ciąg znaków występujący zaraz po **GET** lub **POST**, może być obrazkiem może być nawet "/"). Można go wywołać tak: `./task3 logfile.log`. Format żądanie, spacja, liczba żądań. Sortujemy malejąco po drugiej kolumnie, w przypadku remisu porównujemy pierwszą kolumnę.
 
 ```
 /index.html 150
@@ -38,9 +38,11 @@ Trzeci program powinien wyświetlać najbardziej żądane strony ("strona" to ci
 /faq.html 30
 /terms.html 25
 ```
+### Komentarz
+W poleceniu nie było podkreślone, ale dla testerki trzeba ustalić limit wyświetlanych elementów na 10.
 
 ## Zadanie 4
-Piąty program powinien liczyć żądania złożone w każdej godzinie. Można go wywołać tak: ./task5 logfile.log Godziny z różnych dni kumulujemy do jednej pozycji. Drukujemy 24 linie w formacie . Liczbie N odpowiadają żądania złożone między N:00:00 a N:23:59. Tym razem nie sortujemy po liczbie zapytań a po godzinie
+Piąty program powinien liczyć żądania złożone w każdej godzinie. Można go wywołać tak: `./task5 logfile.log`. Godziny z różnych dni kumulujemy do jednej pozycji. Drukujemy 24 linie w formacie . Liczbie `N` odpowiadają żądania złożone między `N:00:00` a `N:23:59`. Tym razem nie sortujemy po liczbie zapytań a po godzinie.
 
 ```
 00 35
@@ -81,7 +83,7 @@ Szukamy spamerów skrypt uruchamiany jako `./task5 <plik> N` szuka użytkownikó
 ```
 
 ## Zadanie 6
-Szukamy skanerów, czyli użytkowników którzy chodzą po stronie jak leci, albo odpytują serwer wg zadanej listy - w celu scrapowania strony, albo szukają stron typu wp-login w różnych podkatalogach. Na potrzeby tego zadania określamy ile unikalnych żądań wykonano z różnych IP. Czyli jeśli IP weszło 4 razy na stronę /index.php 2 razy na /wp-login.php i po 1 razie na /aaa.html /b.html, wówczas zaliczamy tylko /aaa.html i /bbb.html i dla IP wynik wynosi 2. Zwracamy listę IP, liczba unikalnych wejść, oddzielonych spacją. Koejność malejąca po liczbie unikalnych żądań, w drugiej kolejności po IP. Drukujemy max 10 najwyższych wyników.
+Szukamy skanerów, czyli użytkowników którzy chodzą po stronie jak leci, albo odpytują serwer wg zadanej listy - w celu scrapowania strony, albo szukają stron typu wp-login w różnych podkatalogach. Na potrzeby tego zadania określamy ile unikalnych żądań wykonano z różnych IP. Czyli jeśli IP weszło 4 razy na stronę `/index.php` 2 razy na `/wp-login.php` i po 1 razie na `/aaa.html` `/bbb.html`, wówczas zaliczamy tylko `/aaa.html` i `/bbb.html` i dla IP wynik wynosi 2. Zwracamy listę IP, liczba unikalnych wejść, oddzielonych spacją. Koejność malejąca po liczbie unikalnych żądań, w drugiej kolejności po IP. Drukujemy `max 10 najwyższych wyników`.
 
 ```
 192.168.1.10 15
