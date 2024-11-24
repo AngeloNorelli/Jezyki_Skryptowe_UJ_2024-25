@@ -14,8 +14,6 @@ if [ ! -f "$logfile" ]; then
     exit 1
 fi
 
-(wc -l < "$logfile")
-
 # Zliczenie liczby wierszy w pliku
 total_requests=$(wc -l < "$logfile")
 

@@ -16,4 +16,4 @@ fi
 
 awk '($6 ~ /GET|POST/) {print $7}' "$logfile" | \
 sort | uniq -c | sort -k1,1nr -k2 | \
-awk '{print $2, $1}'
+awk 'NR <= 10 {print $2, $1}'

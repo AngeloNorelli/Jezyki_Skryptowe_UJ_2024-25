@@ -1,13 +1,12 @@
 #!/bin/bash
 
 # Sprawdzenie, czy podano odpowiednią liczbę argumentów
-if [ $# -ne 2 ]; then
-    echo "Użycie: $0 <plik> <N>" >&2
+if [ $# -ne 1 ]; then
+    echo "Użycie: $0 <plik>" >&2
     exit 1
 fi
 
 logfile=$1
-threshold=$2
 
 # Sprawdzenie, czy plik istnieje
 if [ ! -f "$logfile" ]; then
@@ -15,53 +14,59 @@ if [ ! -f "$logfile" ]; then
     exit 1
 fi
 
-# Sprawdzenie, czy N jest liczbą
-if ! [[ "$threshold" =~ ^[0-9]+$ ]]; then
-    echo "N musi być liczbą całkowitą" >&2
-    exit 1
-fi
-
 # Przetwarzanie logu przy użyciu awk
-awk -v N="$threshold" '
-BEGIN {
-    FS=" "  # Ustawienie separatora na spację
-}
+awk '
 {
-    # Z parsowania logu wyciągamy IP, datę i godzinę
+    # Pobranie IP
     ip = $1
-    date_str = $2
-    date_str = substr(date_str, 2, length(date_str)-2)  # Usuwamy nawiasy []
-    date = substr(date_str, 1, 11)  # Data (dzień)
-    hour = substr(date_str, 13, 2)  # Godzina (godzina zapytania)
-    
-    # Liczymy zapytania dla każdego IP w godzinie
-    key = ip " " hour " " date
-    counts[key]++
+
+    # Pobieranie ścieżki żądania (7. pole logu, usunięcie znaki "GET/POST")
+    if ($7 ~ /^\/[^ ]*/) {
+        request = $7
+
+        # Tworzenie unikalnego klucza IP + żądanie
+        unique[ip " " request]++
+    }
 }
 END {
-    # Sortowanie wyników po liczbie zapytań (malejąco), a potem po IP (rosnąco)
-    for (key in counts) {
-        if (counts[key] > N) {
-            split(key, parts, " ")
-            ip = parts[1]
-            hour = parts[2]
-            date = parts[3]
-            
-            # Tworzymy odpowiedni format godzinowy
-            start_hour = sprintf("%02d:00:00", hour)
-            end_hour = sprintf("%02d:00:00", (hour + 1) % 24)
-            
-            # Zapisujemy wynik
-            result[date " " start_hour "-" end_hour " " ip] = counts[key]
+    # Zliczanie liczby unikalnych żądań dla każdego IP
+    for (key in unique) {
+        split(key, parts, " ")
+        ip = parts[1]
+        request = part[2]
+
+        # Zliczanie tylko tych żadań, które wystąpiły tylko raz
+        if (unique[key] == 1) {
+        counts[ip]++
         }
     }
 
-    # Sortowanie po liczbie zapytań malejąco, po IP rosnąco
+    # Przygotowanie wyników do sortowania
     n = 0
-    for (entry in result) {
+    for (ip in counts) {
         n++
-        if (n > 10) break
-        print entry, result[entry]
+        sorted_results[n] = counts[ip] " " ip
+    }
+
+    # Sortowanie: liczba unikalnych żądań (malejąco), IP (rosnąco)
+    #asort(sorted_results, sorted_results, "@val_num_desc")
+    for (i = 1; i <= n; i++) {
+        for (j = i + 1; j <= n; j++) {
+            split(sorted_results[i], a, " ")
+            split(sorted_results[j], b, " ")
+
+            if (a[1] < b[1] || (a[1] == b[1] && a[2] > b[2])) {
+                temp = sorted_results[i]
+                sorted_results[i] = sorted_results[j]
+                sorted_results[j] = temp
+            }
+        }
+    }
+
+    # Wyświetlanie maksymalnie 10 wyników
+    for (i = 1; i <= 10 && i <= n; i++) {
+        split(sorted_results[i], parts, " ")
+        print parts[2], parts[1]
     }
 }
-' "$file_name"
+' "$logfile"

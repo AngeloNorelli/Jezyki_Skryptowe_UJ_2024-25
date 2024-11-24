@@ -30,8 +30,12 @@ awk -F'[ \\[/:]+' -v N="$threshold" '
     month = $5
     year = $6
 
+    # Formatowanie godzin w formacie dwucyfrowym
+    start_hour = sprintf("%02d", hour)
+    end_hour = (hour == 23) ? "24" : sprintf("%02d", (hour + 1) % 24)
+
     # Tworzenie kluczu grupującego
-    key = ip " " hour ":00:00-" (hour+1) ":00:00 " day "/" month "/" year
+    key = ip " " start_hour ":00:00-" end_hour ":00:00 " day "/" month "/" year
 
     # Zliczamy wystąpienia
     count[key]++
