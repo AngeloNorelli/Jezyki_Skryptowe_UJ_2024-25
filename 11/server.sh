@@ -31,17 +31,11 @@ else
     echo "$COUNTER" > "$COUNTER_FILE"
 fi
 
-# Zapis licznika przy wyjściu
-cleanup() {
-    rm -f "$COUNTER_FILE"
-    exit 0
-}
-trap 'echo "Sprzatam..." >&2 & cleanup' EXIT SIGINT SIGTERM
-
 # Uruchomienie socat
 socat TCP-LISTEN:$PORT,reuseaddr,fork SYSTEM:"bash serverworker.sh" &
 SOCAT_PID=$!
-
+echo "$SOCAT_PID" > "$PID_FILE"
+echo "Server started on port: $PORT, with PID: $SOCAT_PID" >&2
 
 
 # Czekaj na zakończenie socat

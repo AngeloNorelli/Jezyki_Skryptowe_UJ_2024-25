@@ -33,15 +33,6 @@ start_server() {
     ./server.sh -p "$port" &
     server_pid=$!
     sleep 0.1
-
-    socat_pid=$(pgrep -P "$server_pid" socat)  # Znajdź PID procesu socat
-    if [[ -n "$socat_pid" ]]; then
-        echo "$socat_pid" > "$PID_FILE"
-        echo "Server started on port $port with PID $socat_pid" >&2
-    else
-        echo "Failed to start server" >&2
-        kill "$server_pid" 2>/dev/null
-    fi
 }
 
 # Stop serwera
