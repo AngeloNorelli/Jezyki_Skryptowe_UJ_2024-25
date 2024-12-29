@@ -23,7 +23,8 @@ Dane wejściowe powinny zostać zapisane w tablicy asocjacyjnej, gdzie kluczem b
 Po zakończeniu wczytywania danych, program powinien posortować klucze (nazwy zwierząt) alfabetycznie.
 
 Na końcu program powinien wypisać w konsoli liczbę wystąpień każdego zwierzęcia, w formacie: nazwa zwierzęcia, spacja, liczba wystąpień.
-Przykładowe dane wejściowe:
+
+## Przykładowe dane wejściowe:
 
     kot
     pies
