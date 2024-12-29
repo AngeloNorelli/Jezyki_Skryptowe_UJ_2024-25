@@ -62,7 +62,13 @@ sub write_matrix {
     my ($filename, $matrix) = @_;
     open my $fh, '>', $filename or die "Cannot open file $filename: $!";
     for my $row (@$matrix) {
-        printf $fh "%8.3f " x scalar(@$row) . "\n", @$row;
+        for my $i (0..$#{$row}) {
+            if ($i == $#{$row}) {
+                printf $fh "%8.3f\n", $row->[$i];
+            } else {
+                printf $fh "%8.3f ", $row->[$i];
+            }
+        }
     }
     close $fh;
 }
