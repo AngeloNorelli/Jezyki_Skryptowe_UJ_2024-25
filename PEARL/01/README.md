@@ -6,7 +6,7 @@ Piszemy wariany programu "wc". Po wywołaniu:
 
 1. ```./wc.pl plik``` robi to samo co po ```./wc.pl - < plik```
 2. Program może przyjmować opcje np.: `-c -m -l -i -w -p`, przy czym zakładamy, że ostatnim elementerm `ARGV` jest zawsze przekazany plik (chyba, że dane przekazane przez `stdin`).
-3. ```./wc.pl -m``` plik drukuje to samo i w tym samym formacie co ````wc -m plik```, np.: "`43 ../PERL00/prob01.pl`" lub "`43 -`"
+3. ```./wc.pl -m``` plik drukuje to samo i w tym samym formacie co ```wc -m plik```, np.: "`43 ../PERL00/prob01.pl`" lub "`43 -`"
 4. ```./wc.pl -l plik``` drukuje to samo i w tym samym formacie co ```wc -l plik```
 5. ```./wc.pl -c plik``` drukuje to samo i w tym samym formacie co ```wc -c plik```
 6. ```./wc.pl -w plik``` drukuje to samo i w tym samym formacie co ```wc -w plik```
@@ -21,8 +21,8 @@ Napisać program do łamania prostych szyfrów substytucyjnych monoalfabetowych.
 
 1. zamianę wszystkich małych liter na wielkie (usuwamy litery spoza [a-zA-Z] w szczególnosci te z ogonkami).
 2. usunięcie wszstkich znaków oprócz spacji i wielkich liter (także znaków końca linii)
-3. przekształcenie każdej litery i spacji x na f(x), gdzie f jest permutacją (nieznaną zbioru znaków [A-Z\ ]
+3. przekształcenie każdej litery i spacji x na f(x), gdzie f jest permutacją (nieznaną zbioru znaków [A-Z\ ])
 
-Przez "dekryptaż" rozumiemy podanie 27 znakow - ciagu na ktory zostanie zaszyfrowany ABCDEFGHIJKLMNOPRSTUVWXYZ_, gdzie '_' oznacza spację (drukujemy spację jako '_').
+Przez "dekryptaż" rozumiemy podanie 27 znakow - ciagu na ktory zostanie zaszyfrowany `ABCDEFGHIJKLMNOPRSTUVWXYZ_`, gdzie `_` oznacza spację (drukujemy spację jako `_`).
 
 Program powinien wczytać plik tekstowy podany pierwszy argument wiersza linii poleceń. Program powinien złamać szyfr metodą częstotliwościową (częstotliwości znajdujemy w sieci, albo ściągamy tekst Potopu i robimy samodzielnie analizę). Jeśli okaże się że wpróbce tekstu mamy litery występujące z podobną częstotliwością (np jedna 30k razy a druda 29.5k razy, to mamy sytuację wątpliwą - wowczas sprawdzamy obie możliwości i powinno wystarczyć wybranie tego wariantu gdzie występują popularne słowa większą ilość razy. Do wyszukania popularnych słów można użyć prościutkiego skryptu w bashu lub "wc" powyżej
