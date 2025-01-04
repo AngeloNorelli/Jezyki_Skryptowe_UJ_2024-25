@@ -48,10 +48,10 @@ Zaimplementuj rozwiązanie z wykorzystaniem pętli i instrukcji warunkowych, kt�
 Napisz program, który wykonuje mnożenie macierzy. Macierze powinny być odczytane z dwóch plików wejściowych podanych jako argumenty wiersza poleceń, a wynik powinien zostać zapisany do pliku wyjściowego o nazwie odpowiadającej trzeciemu argumentowi. Zakładamy, że macierze mają odpowiednie wymiary, tzn. liczba kolumn pierwszej macierzy jest równa liczbie wierszy drugiej macierzy. Format wyjściowy dla każdego elementu wynikowej macierzy to `%8.3f`.
 
 ## Program powinien wykonać następujące kroki:
-Wczytać dwie macierze z plików wejściowych (argumenty wiersza poleceń: #ARGV[0] i $ARGV[1]
-Przeprowadzić mnożenie macierzy.
-Zapisz wynik mnożenia do pliku wyjściowego (argument wiersza poleceń: $ARGV[2]).
-Wynik macierzy wyświetlić w formacie: %8.3f dla każdego elementu.
+- Wczytać dwie macierze z plików wejściowych (argumenty wiersza poleceń: #ARGV[0] i $ARGV[1]
+- Przeprowadzić mnożenie macierzy.
+- Zapisz wynik mnożenia do pliku wyjściowego (argument wiersza poleceń: $ARGV[2]).
+- Wynik macierzy wyświetlić w formacie: %8.3f dla każdego elementu.
 
 ## Przykład
 Wejście:
