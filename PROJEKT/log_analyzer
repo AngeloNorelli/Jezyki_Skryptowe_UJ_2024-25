@@ -1,0 +1,145 @@
+#!/bin/bash
+
+# Funkcja wyświetlająca pomoc
+function show_help {
+    echo "Usage: $0"
+    echo "Interactive log analyzer script."
+    exit 0
+}
+
+# Sprawdzenie argumentów
+if [ "$1" == "-h" ]; then
+    show_help
+fi
+
+clear
+while true; do
+    # Pobranie ścieżki do pliku logów od użytkownika
+    read -p "Enter the path to the log file: " LOG_FILE
+    clear
+
+    # Sprawdzenie, czy plik logów istnieje
+    if [ ! -f "$LOG_FILE" ]; then
+        echo "Error: Log file '$LOG_FILE' does not exist."
+        break
+    fi
+
+    # Parsowanie logów
+    perl controller.pl --parse --file "$LOG_FILE"
+
+    # Interaktywny wybór filtrów
+    FILTER_DATE_APPLIED=false
+    FILTER_IP_APPLIED=false
+    FILTER_USER_AGENT_APPLIED=false
+    FILTER_URL_APPLIED=false
+
+    while true; do
+        clear
+        echo "Do you want to apply any filters? (y/n)"
+        read -r APPLY_FILTERS
+        clear
+        if [ "$APPLY_FILTERS" == "n" ]; then
+            break
+        fi
+
+        echo "Choose a filter to apply:"
+        if [ "$FILTER_DATE_APPLIED" == "false" ]; then
+            echo "1. Date"
+        fi
+        if [ "$FILTER_IP_APPLIED" == "false" ]; then
+            echo "2. IP"
+        fi
+        if [ "$FILTER_USER_AGENT_APPLIED" == "false" ]; then
+            echo "3. User Agent"
+        fi
+        if [ "$FILTER_URL_APPLIED" == "false" ]; then
+            echo "4. URL"
+        fi
+        echo "5. Exit"
+
+        read -p "Enter option: " FILTER_CHOICE
+        clear
+
+        case $FILTER_CHOICE in
+            1)
+                if [ "$FILTER_DATE_APPLIED" == "false" ]; then
+                    read -p "Enter the date filter (format: YYYY-MM-DD): " FILTER_DATE
+                    perl controller.pl --filter-date "$FILTER_DATE"
+                    FILTER_DATE_APPLIED=true
+                else
+                    echo "Date filter already applied."
+                fi
+                ;;
+            2)
+                if [ "$FILTER_IP_APPLIED" == "false" ]; then
+                    read -p "Enter the IP filter: " FILTER_IP
+                    perl controller.pl --filter-ip "$FILTER_IP"
+                    FILTER_IP_APPLIED=true
+                else
+                    echo "IP filter already applied."
+                fi
+                ;;
+            3)
+                if [ "$FILTER_USER_AGENT_APPLIED" == "false" ]; then
+                    read -p "Enter the user agent filter: " FILTER_USER_AGENT
+                    perl controller.pl --filter-user-agent "$FILTER_USER_AGENT"
+                    FILTER_USER_AGENT_APPLIED=true
+                else
+                    echo "User agent filter already applied."
+                fi
+                ;;
+            4)
+                if [ "$FILTER_URL_APPLIED" == "false" ]; then
+                    read -p "Enter the URL filter: " FILTER_URL
+                    perl controller.pl --filter-url "$FILTER_URL"
+                    FILTER_URL_APPLIED=true
+                else
+                    echo "URL filter already applied."
+                fi
+                ;;
+            5)
+                break
+                ;;
+            *)
+                echo "Invalid choice. Please choose again."
+                ;;
+        esac
+    done
+
+    # Generowanie raportu
+    perl controller.pl --generate-report
+
+    # Pobranie nazwy pliku do zapisu raportu od użytkownika
+    read -p "Enter the name of the report file (without extension): " REPORT_FILE_NAME
+
+    # Pobranie formatu eksportu od użytkownika
+    read -p "Enter the export format (text/csv): " EXPORT_FORMAT
+    clear
+
+    # Eksportowanie raportu
+    if [ "$EXPORT_FORMAT" == "text" ]; then
+        perl controller.pl --export-text
+        mv output/report.txt "output/${REPORT_FILE_NAME}.txt"
+        echo "Report exported to output/${REPORT_FILE_NAME}.txt"
+    elif [ "$EXPORT_FORMAT" == "csv" ]; then
+        perl controller.pl --export-csv
+        mv output/report.csv "output/${REPORT_FILE_NAME}.csv"
+        echo "Report exported to output/${REPORT_FILE_NAME}.csv"
+    else
+        echo "Invalid export format. Please choose 'text' or 'csv'."
+        exit 1
+    fi
+
+    echo "Report generated and exported successfully."
+
+    # Pytanie o stworzenie kolejnego raportu
+    read -p "Do you want to create another report? (y/n): " CREATE_ANOTHER
+    if [ "$CREATE_ANOTHER" == "n" ]; then
+        rm -rf temp/*
+        echo "Exiting..."
+        exit 0
+    else
+        clear
+        rm -rf temp/*
+    fi
+done
