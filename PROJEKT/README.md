@@ -3,25 +3,52 @@
 ## Opis
 Narzędzie do analizy logów serwera, które umożliwia parsowanie i filtrowanie danych, tworzenie raportów statystycznych oraz eksport wyników w różnych formatach (tekst lub CSV).
 
-## Użycie
+## Wymagania
+Aby uruchomić program, należy zainstalować:
+1. **Perl**: Trzeba sprawdzić, czy jest zainstalowany Perl przez komendę:
+    ```bash
+    perl -v
+    ```
+2. **Moduły Perl**:
+    * `Getopt::Long`
+    * `JSON`
+    * `Text::CSV`
+
+    Te moduły można zainstalować za pomocą poleceń `cpan`:
+    ```bash
+    cpan Getopt::Long
+    cpan JSON
+    cpan Text::CSV
+    ```
+
+## Uruchomienie
 ```bash
-./log_analyzer.sh <log_file> [date] [ip]
+./log_analyzer
 ```
 
-* `<log_file>` - Ścieżka do pliku logów.
-* `[date]` - Opcjonalny filtr daty (format: YYYY-MM-DD).
-* `[ip]` - Opcjonalny filtr IP.
+Skrypt jest interaktywny i poprosi o:
 
-## Przykład
-```bash
-./log_analyzer.sh logs/logfile.log 2023-10-01 192.168.1.1
-```
+* Ścieżkę do pliku logów.
+* Opcjonalne filtry (data, IP, User Agent, URL, status).
+* Nazwę pliku do zapisu raportu (bez rozszerzenia).
+* Format eksportu (text/csv).
 
 ## Moduły Perl
-* `LogParser.pm` - Moduł do parsowania logów.
-* `ReportGenerator.pm` - Moduł do generowania raportów.
-* `Exporter.pm` - Moduł do eksportowania wyników.
+* [`LogParser.pm`](./lib/LogParser.pm) - Moduł do parsowania logów.
+* [`ReportGenerator.pm`](./lib/ReportGenerator.pm) - Moduł do generowania raportu.
+* [`MyExporter.pm`](./lib/MyExporter.pm) - Moduł do eksportowania wyników.
 
-## Przykładowe pliki wyjściowe
-* example_output/report.txt
-* example_output/report.csv
+## Przykładowy wynik programu
+```
+Total Requests: 10000
+Total Size: 2747282505
+Status Codes:
+  206: 45
+  404: 205
+  301: 163
+  403: 2
+  500: 1
+  200: 8912
+  416: 2
+  unknown: 670
+```
