@@ -25,7 +25,7 @@ sub parse_line {
         $log{date} = $2;
         $log{request} = $3;
         $log{status} = $4;
-        $log{size} = $5;
+        $log{size} = $5 + 0;
         $log{referrer} = $6;
         $log{user_agent} = $7;
     }
@@ -34,7 +34,7 @@ sub parse_line {
 
 sub filter_by_date {
     my ($logs, $date) = @_;
-    # Convert the input date from YYYY-MM-DD to DD/Mon/YYYY
+    
     if ($date =~ /(\d{4})-(\d{2})-(\d{2})/) {
         my $year = $1;
         my $month = $2;
@@ -43,6 +43,30 @@ sub filter_by_date {
         $date = sprintf("%02d/%s/%04d", $day, $months[$month - 1], $year);
     }
     my @filtered_logs = grep { defined $_->{date} && $_->{date} =~ /\Q$date\E/ } @$logs;
+    return \@filtered_logs;
+}
+
+sub filter_by_ip {
+    my ($logs, $ip) = @_;
+    my @filtered_logs = grep { defined $_->{ip} && $_->{ip} eq $ip } @$logs;
+    return \@filtered_logs;
+}
+
+sub filter_by_user_agent {
+    my ($logs, $user_agent) = @_;
+    my @filtered_logs = grep { defined $_->{user_agent} && $_->{user_agent} eq $user_agent } @$logs;
+    return \@filtered_logs;
+}
+
+sub filter_by_url {
+    my ($logs, $url) = @_;
+    my @filtered_logs = grep { defined $_->{request} && $_->{request} =~ /\Q$url\E/ } @$logs;
+    return \@filtered_logs;
+}
+
+sub filter_by_status {
+    my ($logs, $status) = @_;
+    my @filtered_logs = grep { defined $_->{status} && $_->{status} == $status } @$logs;
     return \@filtered_logs;
 }
 
@@ -56,7 +80,7 @@ sub write_logs_to_json {
 sub read_logs_from_json {
     my ($file_path) = @_;
     open my $fh, '<', $file_path or die "Cannot open file '$file_path': $!\n";
-    local $/; # Enable 'slurp' mode
+    local $/;
     my $json_text = <$fh>;
     close $fh;
     my $logs = from_json($json_text);
