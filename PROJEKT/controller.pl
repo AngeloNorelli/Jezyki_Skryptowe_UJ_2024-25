@@ -13,6 +13,7 @@ my $filter_date;
 my $filter_ip;
 my $filter_user_agent;
 my $filter_url;
+my $filter_status;
 my $parse;
 my $generate_report;
 my $export_text;
@@ -24,6 +25,7 @@ GetOptions(
     'filter-ip=s' => \$filter_ip,
     'filter-user-agent=s' => \$filter_user_agent,
     'filter-url=s' => \$filter_url,
+    'filter-status=s' => \$filter_status,
     'parse' => \$parse,
     'generate-report' => \$generate_report,
     'export-text' => \$export_text,
@@ -56,6 +58,12 @@ if ($filter_user_agent) {
 if ($filter_url) {
     my $logs = LogParser::read_logs_from_json('temp/parsed_logs.json');
     my $filtered_logs = LogParser::filter_by_url($logs, $filter_url);
+    LogParser::write_logs_to_json($filtered_logs, 'temp/parsed_logs.json');
+}
+
+if ($filter_status) {
+    my $logs = LogParser::read_logs_from_json('temp/parsed_logs.json');
+    my $filtered_logs = LogParser::filter_by_status($logs, $filter_status);
     LogParser::write_logs_to_json($filtered_logs, 'temp/parsed_logs.json');
 }
 
