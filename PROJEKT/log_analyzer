@@ -32,6 +32,7 @@ while true; do
     FILTER_IP_APPLIED=false
     FILTER_USER_AGENT_APPLIED=false
     FILTER_URL_APPLIED=false
+    FILTER_STATUS_APPLIED=false
 
     while true; do
         clear
@@ -55,7 +56,10 @@ while true; do
         if [ "$FILTER_URL_APPLIED" == "false" ]; then
             echo "4. URL"
         fi
-        echo "5. Exit"
+        if [ "$FILTER_STATUS_APPLIED" == "false" ]; then
+            echo "5. Status"
+        fi
+        echo "6. Exit"
 
         read -p "Enter option: " FILTER_CHOICE
         clear
@@ -98,6 +102,15 @@ while true; do
                 fi
                 ;;
             5)
+                if [ "$FILTER_STATUS_APPLIED" == "false" ]; then
+                    read -p "Enter the status filter: " FILTER_STATUS
+                    perl controller.pl --filter-status "$FILTER_STATUS"
+                    FILTER_STATUS_APPLIED=true
+                else
+                    echo "Status filter already applied."
+                fi
+                ;;
+            6)
                 break
                 ;;
             *)
