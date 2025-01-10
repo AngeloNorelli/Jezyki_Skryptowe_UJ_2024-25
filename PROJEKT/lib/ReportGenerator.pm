@@ -14,7 +14,11 @@ sub generate_report {
     foreach my $log (@$logs) {
         $report{total_requests}++;
         $report{total_size} += $log->{size} // 0;
-        $report{status_codes}{$log->{status}}++;
+        if (defined $log->{status} && $log->{status} =~ /^\d+$/) {
+            $report{status_codes}{$log->{status}}++;
+        } else {
+            $report{status_codes}{'unknown'}++;
+        }
     }
 
     return \%report;
