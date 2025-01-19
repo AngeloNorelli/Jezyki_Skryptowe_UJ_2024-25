@@ -7,27 +7,21 @@ function show_help {
     exit 0
 }
 
-# Sprawdzenie argumentów
-if [ "$1" == "-h" ]; then
-    show_help
-fi
-
-clear
-while true; do
-    # Pobranie ścieżki do pliku logów od użytkownika
-    read -p "Enter the path to the log file: " LOG_FILE
-    clear
-
-    # Sprawdzenie, czy plik logów istnieje
-    if [ ! -f "$LOG_FILE" ]; then
-        echo "Error: Log file '$LOG_FILE' does not exist."
-        break
+# Funkcja sprawdzajaca istnienie pliku z logami
+function check_log_file {
+    if [ ! -f "$1" ]; then
+        echo "Error: Log file '$1' does not exist."
+        exit 1
     fi
+}
 
-    # Parsowanie logów
+# Funkcja parsujaca logi
+function parse_logs {
     perl controller.pl --parse --file "$LOG_FILE"
+}
 
-    # Interaktywny wybór filtrów
+# Funkcja do wyboru filtrow
+function apply_filters {
     FILTER_DATE_APPLIED=false
     FILTER_IP_APPLIED=false
     FILTER_USER_AGENT_APPLIED=false
@@ -118,18 +112,19 @@ while true; do
                 ;;
         esac
     done
+}
 
-    # Generowanie raportu
+# Funkcja generujaca raport
+function generate_report {
     perl controller.pl --generate-report
+}
 
-    # Pobranie nazwy pliku do zapisu raportu od użytkownika
-    read -p "Enter the name of the report file (without extension): " REPORT_FILE_NAME
-
-    # Pobranie formatu eksportu od użytkownika
+# Funkcja eksportujaca raport
+function export_report {
+    read -p "Enter the name of the file you want to save the report (without extension): " REPORT_FILE_NAME
     read -p "Enter the export format (text/csv): " EXPORT_FORMAT
     clear
 
-    # Eksportowanie raportu
     if [ "$EXPORT_FORMAT" == "text" ]; then
         perl controller.pl --export-text
         mv output/report.txt "output/${REPORT_FILE_NAME}.txt"
@@ -142,10 +137,10 @@ while true; do
         echo "Invalid export format. Please choose 'text' or 'csv'."
         exit 1
     fi
+}
 
-    echo "Report generated and exported successfully."
-
-    # Pytanie o stworzenie kolejnego raportu
+# Funkcja pytajaca o stworzenie kolejnego raportu
+function create_another_report {
     read -p "Do you want to create another report? (y/n): " CREATE_ANOTHER
     if [ "$CREATE_ANOTHER" == "n" ]; then
         rm -rf temp/*
@@ -155,4 +150,27 @@ while true; do
         clear
         rm -rf temp/*
     fi
-done
+}
+
+# Glowna funkcja
+function main {
+    while true; do
+        read -p "Enter the path to the log file: " LOG_FILE
+        clear
+        check_log_file "$LOG_FILE"
+        parse_logs
+        apply_filters
+        generate_report
+        export_report
+        echo "Report generated and exported successfully."
+        create_another_report
+    done
+}
+
+# Sprawdzenie argumentów
+if [ "$1" == "-h" ]; then
+    show_help
+fi
+
+clear
+main
