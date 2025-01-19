@@ -20,6 +20,26 @@ function parse_logs {
     perl controller.pl --parse --file "$LOG_FILE"
 }
 
+# Funkcja pytajaca uzytkownika o wybor filtrow
+function ask_to_apply_filters {
+    while true; do
+        echo "Do you want to apply any filters? (y/n)"
+        read -r APPLY_FILTERS
+        clear
+        case "$APPLY_FILTERS" in
+            [yY]|[yY][eE][sS])
+                return 0
+                ;;
+            [nN]|[nN][oO])
+                return 1
+                ;;
+            *)
+                echo "Invalid input. Please enter 'y' or 'n'."
+                ;;
+        esac
+    done
+}
+
 # Funkcja do wyboru filtrow
 function apply_filters {
     FILTER_DATE_APPLIED=false
@@ -30,87 +50,85 @@ function apply_filters {
 
     while true; do
         clear
-        echo "Do you want to apply any filters? (y/n)"
-        read -r APPLY_FILTERS
-        clear
-        if [ "$APPLY_FILTERS" == "n" ]; then
+        
+        if ask_to_apply_filters; then
+            echo "Choose a filter to apply:"
+            if [ "$FILTER_DATE_APPLIED" == "false" ]; then
+                echo "1. Date"
+            fi
+            if [ "$FILTER_IP_APPLIED" == "false" ]; then
+                echo "2. IP"
+            fi
+            if [ "$FILTER_USER_AGENT_APPLIED" == "false" ]; then
+                echo "3. User Agent"
+            fi
+            if [ "$FILTER_URL_APPLIED" == "false" ]; then
+                echo "4. URL"
+            fi
+            if [ "$FILTER_STATUS_APPLIED" == "false" ]; then
+                echo "5. Status"
+            fi
+            echo "6. Exit"
+
+            read -p "Enter option: " FILTER_CHOICE
+            clear
+
+            case $FILTER_CHOICE in
+                1)
+                    if [ "$FILTER_DATE_APPLIED" == "false" ]; then
+                        read -p "Enter the date filter (format: YYYY-MM-DD): " FILTER_DATE
+                        perl controller.pl --filter-date "$FILTER_DATE"
+                        FILTER_DATE_APPLIED=true
+                    else
+                        echo "Date filter already applied."
+                    fi
+                    ;;
+                2)
+                    if [ "$FILTER_IP_APPLIED" == "false" ]; then
+                        read -p "Enter the IP filter: " FILTER_IP
+                        perl controller.pl --filter-ip "$FILTER_IP"
+                        FILTER_IP_APPLIED=true
+                    else
+                        echo "IP filter already applied."
+                    fi
+                    ;;
+                3)
+                    if [ "$FILTER_USER_AGENT_APPLIED" == "false" ]; then
+                        read -p "Enter the user agent filter: " FILTER_USER_AGENT
+                        perl controller.pl --filter-user-agent "$FILTER_USER_AGENT"
+                        FILTER_USER_AGENT_APPLIED=true
+                    else
+                        echo "User agent filter already applied."
+                    fi
+                    ;;
+                4)
+                    if [ "$FILTER_URL_APPLIED" == "false" ]; then
+                        read -p "Enter the URL filter: " FILTER_URL
+                        perl controller.pl --filter-url "$FILTER_URL"
+                        FILTER_URL_APPLIED=true
+                    else
+                        echo "URL filter already applied."
+                    fi
+                    ;;
+                5)
+                    if [ "$FILTER_STATUS_APPLIED" == "false" ]; then
+                        read -p "Enter the status filter: " FILTER_STATUS
+                        perl controller.pl --filter-status "$FILTER_STATUS"
+                        FILTER_STATUS_APPLIED=true
+                    else
+                        echo "Status filter already applied."
+                    fi
+                    ;;
+                6)
+                    break
+                    ;;
+                *)
+                    echo "Invalid choice. Please choose again."
+                    ;;
+            esac
+        else
             break
         fi
-
-        echo "Choose a filter to apply:"
-        if [ "$FILTER_DATE_APPLIED" == "false" ]; then
-            echo "1. Date"
-        fi
-        if [ "$FILTER_IP_APPLIED" == "false" ]; then
-            echo "2. IP"
-        fi
-        if [ "$FILTER_USER_AGENT_APPLIED" == "false" ]; then
-            echo "3. User Agent"
-        fi
-        if [ "$FILTER_URL_APPLIED" == "false" ]; then
-            echo "4. URL"
-        fi
-        if [ "$FILTER_STATUS_APPLIED" == "false" ]; then
-            echo "5. Status"
-        fi
-        echo "6. Exit"
-
-        read -p "Enter option: " FILTER_CHOICE
-        clear
-
-        case $FILTER_CHOICE in
-            1)
-                if [ "$FILTER_DATE_APPLIED" == "false" ]; then
-                    read -p "Enter the date filter (format: YYYY-MM-DD): " FILTER_DATE
-                    perl controller.pl --filter-date "$FILTER_DATE"
-                    FILTER_DATE_APPLIED=true
-                else
-                    echo "Date filter already applied."
-                fi
-                ;;
-            2)
-                if [ "$FILTER_IP_APPLIED" == "false" ]; then
-                    read -p "Enter the IP filter: " FILTER_IP
-                    perl controller.pl --filter-ip "$FILTER_IP"
-                    FILTER_IP_APPLIED=true
-                else
-                    echo "IP filter already applied."
-                fi
-                ;;
-            3)
-                if [ "$FILTER_USER_AGENT_APPLIED" == "false" ]; then
-                    read -p "Enter the user agent filter: " FILTER_USER_AGENT
-                    perl controller.pl --filter-user-agent "$FILTER_USER_AGENT"
-                    FILTER_USER_AGENT_APPLIED=true
-                else
-                    echo "User agent filter already applied."
-                fi
-                ;;
-            4)
-                if [ "$FILTER_URL_APPLIED" == "false" ]; then
-                    read -p "Enter the URL filter: " FILTER_URL
-                    perl controller.pl --filter-url "$FILTER_URL"
-                    FILTER_URL_APPLIED=true
-                else
-                    echo "URL filter already applied."
-                fi
-                ;;
-            5)
-                if [ "$FILTER_STATUS_APPLIED" == "false" ]; then
-                    read -p "Enter the status filter: " FILTER_STATUS
-                    perl controller.pl --filter-status "$FILTER_STATUS"
-                    FILTER_STATUS_APPLIED=true
-                else
-                    echo "Status filter already applied."
-                fi
-                ;;
-            6)
-                break
-                ;;
-            *)
-                echo "Invalid choice. Please choose again."
-                ;;
-        esac
     done
 }
 
@@ -141,15 +159,23 @@ function export_report {
 
 # Funkcja pytajaca o stworzenie kolejnego raportu
 function create_another_report {
-    read -p "Do you want to create another report? (y/n): " CREATE_ANOTHER
-    if [ "$CREATE_ANOTHER" == "n" ]; then
-        rm -rf temp/*
-        echo "Exiting..."
-        exit 0
-    else
-        clear
-        rm -rf temp/*
-    fi
+    while true; do
+        read -p "Do you want to create another report? (y/n): " CREATE_ANOTHER
+        case "$CREATE_ANOTHER" in
+            [nN]|[nN][oO])
+                rm -rf temp/*
+                echo "Exiting..."
+                exit 0
+                ;;
+            [yY]|[yY][eE][sS])
+                clear
+                rm -rf temp/*
+                ;;
+            *)
+                echo "Invalid input. Please enter 'y' or 'n'."
+                ;;
+        esac
+    done
 }
 
 # Glowna funkcja
